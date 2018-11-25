@@ -1,5 +1,6 @@
 package com.example.piotrskorupa.raspiweatherapp;
 
+import android.graphics.Color;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -16,6 +17,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
@@ -55,8 +58,11 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "You will be able to send your weather via sms from here",
+                        Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+
+                //TODO: here insert sending your weather data via sms
             }
         });
 
@@ -113,12 +119,54 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            return rootView;
+
+            if (getArguments().getInt(ARG_SECTION_NUMBER) == 1)
+            {
+                View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+                EditText temperatureEdit = (EditText) rootView.findViewById(R.id.temperature_edit_text);
+                EditText pressureEdit = (EditText) rootView.findViewById(R.id.pressure_edit_text);
+                EditText humidityEdit = (EditText) rootView.findViewById(R.id.humidity_edit_text);
+
+                Button cameraButton = (Button) rootView.findViewById(R.id.camera_button);
+
+                temperatureEdit.setEnabled(false);
+                pressureEdit.setEnabled(false);
+                humidityEdit.setEnabled(false);
+
+                cameraButton.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View view) {
+                        Snackbar.make(view, "You will be able to watch image from camera from here",
+                                Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
+
+                        //TODO: add camera here
+                    }
+                });
+
+                //TODO: add data from sensors
+
+                return rootView;
+            }else{
+                View rootView = inflater.inflate(R.layout.fragment_yahoo, container, false);
+                TextView mainTextView = (TextView) rootView.findViewById(R.id.section_label2);
+                mainTextView.setText("Weather from Yahoo API");
+                mainTextView.setTextSize(24.0f);
+                mainTextView.setTextColor(Color.parseColor("#01ec00"));
+
+                //TODO: add a yahoo api here
+
+                return rootView;
+            }
+
         }
     }
+
+
+
+
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
@@ -139,8 +187,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
-            return 3;
+            // Show 2 total pages.
+            return 2;
         }
 
         @Override
@@ -150,8 +198,6 @@ public class MainActivity extends AppCompatActivity {
                     return "SECTION 1";
                 case 1:
                     return "SECTION 2";
-                case 2:
-                    return "SECTION 3";
             }
             return null;
         }
