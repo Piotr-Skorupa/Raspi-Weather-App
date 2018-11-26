@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,6 +21,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "You will be able to send your weather via sms from here",
-                        Snackbar.LENGTH_LONG)
+                        Snackbar.LENGTH_SHORT)
                         .setAction("Action", null).show();
 
                 //TODO: here insert sending your weather data via sms
@@ -101,6 +109,12 @@ public class MainActivity extends AppCompatActivity {
          */
         private static final String ARG_SECTION_NUMBER = "section_number";
 
+        private MqttConnector mqttConnector;
+
+        public EditText temperatureEdit;
+        public EditText pressureEdit;
+        public EditText humidityEdit;
+
         public PlaceholderFragment() {
         }
 
@@ -124,9 +138,9 @@ public class MainActivity extends AppCompatActivity {
             {
                 View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-                EditText temperatureEdit = (EditText) rootView.findViewById(R.id.temperature_edit_text);
-                EditText pressureEdit = (EditText) rootView.findViewById(R.id.pressure_edit_text);
-                EditText humidityEdit = (EditText) rootView.findViewById(R.id.humidity_edit_text);
+                temperatureEdit = (EditText) rootView.findViewById(R.id.temperature_edit_text);
+                pressureEdit = (EditText) rootView.findViewById(R.id.pressure_edit_text);
+                humidityEdit = (EditText) rootView.findViewById(R.id.humidity_edit_text);
 
                 Button cameraButton = (Button) rootView.findViewById(R.id.camera_button);
 
@@ -134,12 +148,21 @@ public class MainActivity extends AppCompatActivity {
                 pressureEdit.setEnabled(false);
                 humidityEdit.setEnabled(false);
 
+                try {
+                    startMqtt();
+                } catch (MqttException e) {
+                    e.printStackTrace();
+                    Snackbar.make(getView(), "Something go wrong :(",
+                            Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
+
                 cameraButton.setOnClickListener(new View.OnClickListener() {
 
                     @Override
                     public void onClick(View view) {
                         Snackbar.make(view, "You will be able to watch image from camera from here",
-                                Snackbar.LENGTH_LONG)
+                                Snackbar.LENGTH_SHORT)
                                 .setAction("Action", null).show();
 
                         //TODO: add camera here
@@ -161,6 +184,41 @@ public class MainActivity extends AppCompatActivity {
                 return rootView;
             }
 
+        }
+
+        private void startMqtt() throws MqttException {
+            mqttConnector = new MqttConnector(getActivity().getApplicationContext());
+            mqttConnector.setCallback(new MqttCallbackExtended() {
+                @Override
+                public void connectComplete(boolean b, String s) {
+
+                }
+
+                @Override
+                public void connectionLost(Throwable throwable) {
+
+                }
+
+                @Override
+                public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
+                    Log.w("Debug", mqttMessage.toString());
+                    if (topic.toString().equals("SENSORS/PRESSURE")) {
+                        pressureEdit.setText(mqttMessage.toString() + " hPa");
+                    }
+                    else if (topic.toString().equals("SENSORS/TEMPERATURE")){
+                        temperatureEdit.setText(mqttMessage.toString() + " C");
+                    }
+                    else if (topic.toString().equals("SENSORS/HUMIDITY"))
+                    {
+                        humidityEdit.setText(mqttMessage.toString() + " %");
+                    }
+                }
+
+                @Override
+                public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+
+                }
+            });
         }
     }
 
