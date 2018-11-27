@@ -1,5 +1,6 @@
 package com.example.piotrskorupa.raspiweatherapp;
 
+import android.app.ProgressDialog;
 import android.graphics.Color;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -28,7 +29,10 @@ import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
-public class MainActivity extends AppCompatActivity {
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+public class MainActivity extends AppCompatActivity implements WeatherServiceCallback{
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -93,10 +97,29 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Toast.makeText(this, "Settings here! ", Toast.LENGTH_SHORT).show();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void serviceSucces(Channel channel) {
+        Item item = channel.getItem();
+
+        double tempInFarenheit = new Double(item.getCondition().getTemperature());
+        double tempInCelsjus = (tempInFarenheit - 32.0) / 1.800;
+        Double temp = BigDecimal.valueOf(tempInCelsjus)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
+        String description = item.getCondition().getDescription();
+        PlaceholderFragment.temperatureEdit2.setText(temp + " C. " + description);
+    }
+
+    @Override
+    public void serviceFailure(Exception exception) {
+        Toast.makeText(this, exception.getMessage(), Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -111,9 +134,12 @@ public class MainActivity extends AppCompatActivity {
 
         private MqttConnector mqttConnector;
 
-        public EditText temperatureEdit;
-        public EditText pressureEdit;
-        public EditText humidityEdit;
+        public static EditText temperatureEdit, temperatureEdit2;
+        public static EditText pressureEdit, pressureEdit2;
+        public static EditText humidityEdit, humidityEdit2, windEdit;
+
+        private YahooWeatherService yahooService;
+        private String location;
 
         public PlaceholderFragment() {
         }
@@ -169,18 +195,23 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-                //TODO: add data from sensors
-
                 return rootView;
             }else{
                 View rootView = inflater.inflate(R.layout.fragment_yahoo, container, false);
-                TextView mainTextView = (TextView) rootView.findViewById(R.id.section_label2);
-                mainTextView.setText("Weather from Yahoo API");
-                mainTextView.setTextSize(24.0f);
-                mainTextView.setTextColor(Color.parseColor("#01ec00"));
+                temperatureEdit2 = (EditText) rootView.findViewById(R.id.temperature_edit_text2);
+                pressureEdit2 = (EditText) rootView.findViewById(R.id.pressure_edit_text2);
+                humidityEdit2 = (EditText) rootView.findViewById(R.id.humidity_edit_text2);
+                windEdit = (EditText) rootView.findViewById(R.id.wind_edit_text);
 
+                temperatureEdit2.setEnabled(false);
+                pressureEdit2.setEnabled(false);
+                humidityEdit2.setEnabled(false);
+                windEdit.setEnabled(false);
+
+                location = "Siechnice, Poland";
+                yahooService = new YahooWeatherService((WeatherServiceCallback) getActivity(), location);
+                yahooService.refreshWeather();
                 //TODO: add a yahoo api here
-
                 return rootView;
             }
 
