@@ -6,8 +6,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
+import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -63,6 +66,8 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
     private static final int MY_PERMISSIONS_REQUEST_SEND_SMS =0 ;
     public static String location;
     public static final String message = "Hi that is the weather in my place ";
+    private String phoneNumber ="";
+    private int PICK_CONTACT = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,18 +94,47 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
             @Override
             public void onClick(View view) {
 
-                String fullMessage = message + location + ": temperature " + temperatureMain + " C, pressure"
-                        + pressureMain + " hPa, humidity " + humidityMain + "%.";
-
-                SmsManager smsManager = SmsManager.getDefault();
-                smsManager.sendTextMessage("661399886", null, fullMessage, null, null);
-
-                Toast.makeText(MainActivity.this, "SMS has been sent!", Toast.LENGTH_SHORT).show();
+                Intent contactList = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                contactList.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
+                startActivityForResult(contactList, PICK_CONTACT);
             }
         });
 
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == PICK_CONTACT) {
+            try {
+                Uri contactData = data.getData();
+                Cursor c = getContentResolver().query(contactData,null,null,null, null);
+
+                if (resultCode == RESULT_OK) {
+                    while (c.moveToNext()) {
+                        phoneNumber = c.getString(c.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+
+
+                        String fullMessage = message + location + ": temperature " + temperatureMain + " C, pressure"
+                                + pressureMain + " hPa, humidity " + humidityMain + "%.";
+
+                        if (ContextCompat.checkSelfPermission(this,Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED){
+                            SmsManager smsManager = SmsManager.getDefault();
+                            smsManager.sendTextMessage(phoneNumber, null, fullMessage, null, null);
+
+                            Toast.makeText(this, "SMS has been sent to: " + phoneNumber, Toast.LENGTH_SHORT).show();
+                            phoneNumber = "";
+                        }else{
+                            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.SEND_SMS}, MY_PERMISSIONS_REQUEST_SEND_SMS);
+                        }
+                    }
+                }
+            }catch (Exception e){
+                Toast.makeText(this, "SMS wasn't send", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
