@@ -1,9 +1,18 @@
 package com.example.piotrskorupa.raspiweatherapp;
 
+import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -12,6 +21,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -48,12 +58,20 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-
+    public static double temperatureMain;
+    public static int pressureMain, humidityMain;
+    private static final int MY_PERMISSIONS_REQUEST_SEND_SMS =0 ;
+    public static String location;
+    public static final String message = "Hi that is the weather in my place ";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        temperatureMain = 0.0;
+        humidityMain = 0;
+        pressureMain = 0;
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -70,11 +88,14 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "You will be able to send your weather via sms from here",
-                        Snackbar.LENGTH_SHORT)
-                        .setAction("Action", null).show();
 
-                //TODO: here insert sending your weather data via sms
+                String fullMessage = message + location + ": temperature " + temperatureMain + " C, pressure"
+                        + pressureMain + " hPa, humidity " + humidityMain + "%.";
+
+                SmsManager smsManager = SmsManager.getDefault();
+                smsManager.sendTextMessage("661399886", null, fullMessage, null, null);
+
+                Toast.makeText(MainActivity.this, "SMS has been sent!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -97,7 +118,8 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            Toast.makeText(this, "Settings here! ", Toast.LENGTH_SHORT).show();
+            Intent settings = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(settings);
             return true;
         }
 
@@ -111,10 +133,25 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
         double tempInFarenheit = new Double(item.getCondition().getTemperature());
         double tempInCelsjus = (tempInFarenheit - 32.0) / 1.800;
         Double temp = BigDecimal.valueOf(tempInCelsjus)
-                .setScale(2, RoundingMode.HALF_UP)
+                .setScale(1, RoundingMode.HALF_UP)
                 .doubleValue();
         String description = item.getCondition().getDescription();
         PlaceholderFragment.temperatureEdit2.setText(temp + " C. " + description);
+
+        int pressure, humidity, windSpeed;
+
+        pressure = channel.getAtmosphere().getPressure();
+        humidity = channel.getAtmosphere().getHumidity();
+        windSpeed = channel.getWind().getSpeed();
+
+        PlaceholderFragment.pressureEdit2.setText(pressure + " hPa");
+        PlaceholderFragment.humidityEdit2.setText(humidity + " %");
+        PlaceholderFragment.windEdit.setText(windSpeed + "km/h");
+
+        temperatureMain = temp;
+        pressureMain = pressure;
+        humidityMain = humidity;
+
     }
 
     @Override
@@ -138,8 +175,7 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
         public static EditText pressureEdit, pressureEdit2;
         public static EditText humidityEdit, humidityEdit2, windEdit;
 
-        private YahooWeatherService yahooService;
-        private String location;
+        //private YahooWeatherService yahooService;
 
         public PlaceholderFragment() {
         }
@@ -198,20 +234,57 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                 return rootView;
             }else{
                 View rootView = inflater.inflate(R.layout.fragment_yahoo, container, false);
+
+                final SharedPreferences[] sharedPref = {PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext())};
+                String city = sharedPref[0].getString("city", "Siechnice").toString();
+                String country = sharedPref[0].getString("country", "Poland").toString();
+
+
+                location =  city + ", " + country;
+
+
+                final TextView locationText = (TextView) rootView.findViewById(R.id.location_text);
                 temperatureEdit2 = (EditText) rootView.findViewById(R.id.temperature_edit_text2);
                 pressureEdit2 = (EditText) rootView.findViewById(R.id.pressure_edit_text2);
                 humidityEdit2 = (EditText) rootView.findViewById(R.id.humidity_edit_text2);
                 windEdit = (EditText) rootView.findViewById(R.id.wind_edit_text);
+
+                locationText.setText(location);
 
                 temperatureEdit2.setEnabled(false);
                 pressureEdit2.setEnabled(false);
                 humidityEdit2.setEnabled(false);
                 windEdit.setEnabled(false);
 
-                location = "Siechnice, Poland";
-                yahooService = new YahooWeatherService((WeatherServiceCallback) getActivity(), location);
-                yahooService.refreshWeather();
-                //TODO: add a yahoo api here
+                final YahooWeatherService[] yahooService = {new YahooWeatherService((WeatherServiceCallback) getActivity(), location)};
+                try{
+                    yahooService[0].refreshWeather();
+                }catch (Exception e){
+                    Toast.makeText(getActivity(), "Bad location!", Toast.LENGTH_SHORT);
+                }
+
+                Button refresh = (Button) rootView.findViewById(R.id.button_refresh);
+                refresh.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View view) {
+
+                        sharedPref[0] = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+                        String city = sharedPref[0].getString("city", "Siechnice").toString();
+                        String country = sharedPref[0].getString("country", "Poland").toString();
+
+                        location =  city + ", " + country;
+                        locationText.setText(location);
+                        try{
+                            yahooService[0] = new YahooWeatherService((WeatherServiceCallback) getActivity(), location);
+                            yahooService[0].refreshWeather();
+                        }catch (Exception e){
+                            Toast.makeText(getActivity(), "Bad location!", Toast.LENGTH_SHORT);
+                        }
+
+                    }
+                });
+
                 return rootView;
             }
 

@@ -95,7 +95,13 @@ public class YahooWeatherService {
 
                 }catch (JSONException e)
                 {
-                    e.printStackTrace();
+                    error = e;
+                    callback.serviceFailure(error);
+                    //e.printStackTrace();
+                }catch (Exception e)
+                {
+                    error = e;
+                    callback.serviceFailure(error);
                 }
             }
 
