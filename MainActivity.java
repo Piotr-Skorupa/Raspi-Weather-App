@@ -181,11 +181,6 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
         PlaceholderFragment.pressureEdit2.setText(pressure + " hPa");
         PlaceholderFragment.humidityEdit2.setText(humidity + " %");
         PlaceholderFragment.windEdit.setText(windSpeed + "km/h");
-
-        temperatureMain = temp;
-        pressureMain = pressure;
-        humidityMain = humidity;
-
     }
 
     @Override
@@ -203,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
          */
         private static final String ARG_SECTION_NUMBER = "section_number";
 
-        private MqttConnector mqttConnector;
+        public MqttConnector mqttConnector;
 
         public static EditText temperatureEdit, temperatureEdit2;
         public static EditText pressureEdit, pressureEdit2;
@@ -229,11 +224,9 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-
             if (getArguments().getInt(ARG_SECTION_NUMBER) == 1)
             {
                 View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
                 temperatureEdit = (EditText) rootView.findViewById(R.id.temperature_edit_text);
                 pressureEdit = (EditText) rootView.findViewById(R.id.pressure_edit_text);
                 humidityEdit = (EditText) rootView.findViewById(R.id.humidity_edit_text);
@@ -246,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
 
                 try {
                     startMqtt();
+
                 } catch (MqttException e) {
                     e.printStackTrace();
                     Snackbar.make(getView(), "Something go wrong :(",
@@ -257,11 +251,10 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
 
                     @Override
                     public void onClick(View view) {
-                        Snackbar.make(view, "You will be able to watch image from camera from here",
-                                Snackbar.LENGTH_SHORT)
-                                .setAction("Action", null).show();
 
-                        //TODO: add camera here
+                        mqttConnector.publishCamOnOff(true);
+                        Intent camera = new Intent(getActivity(), CameraActivity.class);
+                        startActivity(camera);
                     }
                 });
 
@@ -329,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
             mqttConnector.setCallback(new MqttCallbackExtended() {
                 @Override
                 public void connectComplete(boolean b, String s) {
-
+                    mqttConnector.publishCamOnOff(false);
                 }
 
                 @Override
@@ -342,13 +335,22 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                     Log.w("Debug", mqttMessage.toString());
                     if (topic.toString().equals("SENSORS/PRESSURE")) {
                         pressureEdit.setText(mqttMessage.toString() + " hPa");
+                        pressureMain = Integer.parseInt(mqttMessage.toString());
                     }
                     else if (topic.toString().equals("SENSORS/TEMPERATURE")){
                         temperatureEdit.setText(mqttMessage.toString() + " C");
+                        temperatureMain = Double.parseDouble(mqttMessage.toString());
                     }
                     else if (topic.toString().equals("SENSORS/HUMIDITY"))
                     {
                         humidityEdit.setText(mqttMessage.toString() + " %");
+                        humidityMain = Integer.parseInt(mqttMessage.toString());
+                    }
+                    else if (topic.toString().equals("SENSORS/CAMERA_PIC"))
+                    {
+                        CameraActivity.imageString = mqttMessage.toString();
+                        CameraActivity.isImageChanged = true;
+                        Log.e("message","I have got an message from camera. Should i have ?");
                     }
                 }
 

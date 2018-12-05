@@ -26,6 +26,10 @@ public class MqttConnector {
     final String subscriptionTopic = "SENSORS/PRESSURE";
     final String subscriptionTopic2 = "SENSORS/TEMPERATURE";
     final String subscriptionTopic3 = "SENSORS/HUMIDITY";
+    final String subscriptionTopic4 = "SENSORS/CAMERA_PIC";
+    final String publishTopic = "SENSORS/CAMERA_ON_OF";
+    final String CAMERA_ON = "ON";
+    final String CAMERA_OFF = "OFF";
 
     public MqttConnector(Context context) throws MqttException {
         mqttAndroidClient = new MqttAndroidClient(context, serverUri, clientId);
@@ -81,6 +85,7 @@ public class MqttConnector {
                     subscribeToTopic();
                     subscribeToTopic2();
                     subscribeToTopic3();
+                    subscribeToTopic4();
                 }
 
                 @Override
@@ -153,6 +158,44 @@ public class MqttConnector {
         } catch (MqttException ex) {
             System.err.println("Exceptionst subscribing");
             ex.printStackTrace();
+        }
+    }
+
+    private void subscribeToTopic4() {
+        try {
+            mqttAndroidClient.subscribe(subscriptionTopic4, 0, null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    Log.w("Mqtt","Subscribed " + subscriptionTopic4 +"!");
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    Log.w("Mqtt", "Subscribed fail!");
+                }
+            });
+
+        } catch (MqttException ex) {
+            System.err.println("Exceptionst subscribing");
+            ex.printStackTrace();
+        }
+    }
+
+    public void publishCamOnOff(boolean turnOn)
+    {
+        try {
+            String message;
+            if (turnOn == true)
+            {
+                message = CAMERA_ON;
+            }
+            else {
+                message = CAMERA_OFF;
+            }
+            MqttMessage mess = new MqttMessage(message.getBytes());
+            mqttAndroidClient.publish(publishTopic, message.getBytes(),0, false);
+        } catch (MqttException e) {
+            e.printStackTrace();
         }
     }
 }
