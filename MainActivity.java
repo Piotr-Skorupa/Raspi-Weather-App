@@ -322,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
             mqttConnector.setCallback(new MqttCallbackExtended() {
                 @Override
                 public void connectComplete(boolean b, String s) {
-                    mqttConnector.publishCamOnOff(false);
+
                 }
 
                 @Override

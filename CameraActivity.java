@@ -23,18 +23,28 @@ public class CameraActivity extends AppCompatActivity {
         setContentView(R.layout.activity_camera);
         cameraImage = (ImageView) findViewById(R.id.camera_picture);
 
-        new AsyncTask<Void, Void, Void>() {
+
+        new AsyncTask<Void, Void, Bitmap>() {
             @Override
-            protected Void doInBackground(Void... params) {
+            protected Bitmap doInBackground(Void... params) {
 
                 if (isImageChanged == true) {
                     byte[] decodeString = Base64.decode(imageString, Base64.DEFAULT);
                     Bitmap decoded = BitmapFactory.decodeByteArray(decodeString, 0, decodeString.length);
-                    cameraImage.setImageBitmap(decoded);
-                    isImageChanged = false;
+                    //isImageChanged = false;
+                    return decoded;
                 }
+
                 return null;
             }
+
+            @Override
+            protected void onPostExecute(Bitmap b) {
+                cameraImage.setImageBitmap(b);
+            }
+
         }.execute();
+
     }
+
 }

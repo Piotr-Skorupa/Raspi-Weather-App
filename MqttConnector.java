@@ -27,7 +27,7 @@ public class MqttConnector {
     final String subscriptionTopic2 = "SENSORS/TEMPERATURE";
     final String subscriptionTopic3 = "SENSORS/HUMIDITY";
     final String subscriptionTopic4 = "SENSORS/CAMERA_PIC";
-    final String publishTopic = "SENSORS/CAMERA_ON_OF";
+    final String publishTopic = "SENSORS/CAMERA_ON_OFF";
     final String CAMERA_ON = "ON";
     final String CAMERA_OFF = "OFF";
 
@@ -193,7 +193,8 @@ public class MqttConnector {
                 message = CAMERA_OFF;
             }
             MqttMessage mess = new MqttMessage(message.getBytes());
-            mqttAndroidClient.publish(publishTopic, message.getBytes(),0, false);
+            mqttAndroidClient.publish(publishTopic, mess);
+            Log.w("camera", "sended camera");
         } catch (MqttException e) {
             e.printStackTrace();
         }
