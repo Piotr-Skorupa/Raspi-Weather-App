@@ -7,6 +7,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Camera;
 import android.graphics.Color;
 import android.net.Uri;
 import android.preference.PreferenceManager;
@@ -25,6 +28,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.telephony.SmsManager;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -61,8 +65,8 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-    public static double temperatureMain;
-    public static int pressureMain, humidityMain;
+    public static double temperatureMain = 0.0;
+    public static int pressureMain = 0, humidityMain = 0;
     private static final int MY_PERMISSIONS_REQUEST_SEND_SMS =0 ;
     public static String location;
     public static final String message = "Hi that is the weather in my place ";
@@ -74,9 +78,9 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        temperatureMain = 0.0;
-        humidityMain = 0;
-        pressureMain = 0;
+//        temperatureMain = 0.0;
+//        humidityMain = 0;
+//        pressureMain = 0;
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -114,6 +118,9 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                     while (c.moveToNext()) {
                         phoneNumber = c.getString(c.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
 
+                        if (pressureMain == 0 || humidityMain == 0){
+                            throw new Exception("bad data from sensor");
+                        }
 
                         String fullMessage = message + location + ": temperature " + temperatureMain + " C, pressure"
                                 + pressureMain + " hPa, humidity " + humidityMain + "%.";
@@ -198,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
          */
         private static final String ARG_SECTION_NUMBER = "section_number";
 
-        public MqttConnector mqttConnector;
+        public static MqttConnector mqttConnector;
 
         public static EditText temperatureEdit, temperatureEdit2;
         public static EditText pressureEdit, pressureEdit2;
@@ -346,11 +353,12 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                         humidityEdit.setText(mqttMessage.toString() + " %");
                         humidityMain = Integer.parseInt(mqttMessage.toString());
                     }
-                    else if (topic.toString().equals("SENSORS/CAMERA_PIC"))
-                    {
-                        CameraActivity.imageString = mqttMessage.toString();
-                        CameraActivity.isImageChanged = true;
-                        Log.e("message","I have got an message from camera. Should i have ?");
+                    else if (topic.toString().equals("SENSORS/CAMERA_PIC")) {
+                        String imageString = mqttMessage.toString();
+                        byte[] decodeString = Base64.decode(imageString, Base64.DEFAULT);
+                        Bitmap decoded = BitmapFactory.decodeByteArray(decodeString, 0, decodeString.length);
+                        CameraActivity.cameraImage.setImageBitmap(decoded);
+                        Log.e("message", "I have got an message from camera. Should i have ?");
                     }
                 }
 

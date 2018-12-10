@@ -7,44 +7,31 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Base64;
 import android.widget.ImageView;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
 
 public class CameraActivity extends AppCompatActivity {
 
-    private ImageView cameraImage;
-
-    public static String imageString;
-    public static boolean isImageChanged = false;
+    public static ImageView cameraImage;
+    public static TextView mainText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
         cameraImage = (ImageView) findViewById(R.id.camera_picture);
+        mainText = (TextView) findViewById(R.id.camera_text);
+    }
 
+    @Override
+    public void onStop () {
 
-        new AsyncTask<Void, Void, Bitmap>() {
-            @Override
-            protected Bitmap doInBackground(Void... params) {
-
-                if (isImageChanged == true) {
-                    byte[] decodeString = Base64.decode(imageString, Base64.DEFAULT);
-                    Bitmap decoded = BitmapFactory.decodeByteArray(decodeString, 0, decodeString.length);
-                    //isImageChanged = false;
-                    return decoded;
-                }
-
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Bitmap b) {
-                cameraImage.setImageBitmap(b);
-            }
-
-        }.execute();
-
+        //sending STOP_REQUEST to camera
+        MainActivity.PlaceholderFragment.mqttConnector.publishCamOnOff(false);
+        super.onStop();
     }
 
 }
