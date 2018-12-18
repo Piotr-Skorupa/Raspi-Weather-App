@@ -65,8 +65,7 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-    public static double temperatureMain = 0.0;
-    public static int pressureMain = 0, humidityMain = 0;
+    public static double temperatureMain = 0.0, pressureMain = 0.0, humidityMain = 0.0;
     private static final int MY_PERMISSIONS_REQUEST_SEND_SMS =0 ;
     public static String location;
     public static final String message = "Hi that is the weather in my place ";
@@ -77,10 +76,6 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-//        temperatureMain = 0.0;
-//        humidityMain = 0;
-//        pressureMain = 0;
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -122,8 +117,8 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                             throw new Exception("bad data from sensor");
                         }
 
-                        String fullMessage = message + location + ": temperature " + temperatureMain + " C, pressure"
-                                + pressureMain + " hPa, humidity " + humidityMain + "%.";
+                        String fullMessage = message + location + ": temperature " + temperatureMain + " C, pressure "
+                                + pressureMain + " hPa, humidity " + humidityMain + " %.";
 
                         if (ContextCompat.checkSelfPermission(this,Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED){
                             SmsManager smsManager = SmsManager.getDefault();
@@ -273,9 +268,7 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                 String city = sharedPref[0].getString("city", "Siechnice").toString();
                 String country = sharedPref[0].getString("country", "Poland").toString();
 
-
                 location =  city + ", " + country;
-
 
                 final TextView locationText = (TextView) rootView.findViewById(R.id.location_text);
                 temperatureEdit2 = (EditText) rootView.findViewById(R.id.temperature_edit_text2);
@@ -342,16 +335,19 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                     Log.w("Debug", mqttMessage.toString());
                     if (topic.toString().equals("SENSORS/PRESSURE")) {
                         pressureEdit.setText(mqttMessage.toString() + " hPa");
-                        pressureMain = Integer.parseInt(mqttMessage.toString());
+                        pressureMain = Double.parseDouble(mqttMessage.toString());
+                        //Toast.makeText(getActivity(), pressureMain, Toast.LENGTH_SHORT).show();
                     }
                     else if (topic.toString().equals("SENSORS/TEMPERATURE")){
                         temperatureEdit.setText(mqttMessage.toString() + " C");
                         temperatureMain = Double.parseDouble(mqttMessage.toString());
+                        //Toast.makeText(getActivity(), pressureMain, Toast.LENGTH_SHORT).show();
                     }
                     else if (topic.toString().equals("SENSORS/HUMIDITY"))
                     {
                         humidityEdit.setText(mqttMessage.toString() + " %");
-                        humidityMain = Integer.parseInt(mqttMessage.toString());
+                        humidityMain = Double.parseDouble(mqttMessage.toString());
+                        //Toast.makeText(getActivity(), pressureMain, Toast.LENGTH_SHORT).show();
                     }
                     else if (topic.toString().equals("SENSORS/CAMERA_PIC")) {
                         String imageString = mqttMessage.toString();
@@ -369,10 +365,6 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
             });
         }
     }
-
-
-
-
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
