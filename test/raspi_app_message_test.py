@@ -72,6 +72,7 @@ def simulate_sensors():
             result = client.publish(pressure, str(messages['press']))
             result = client.publish(humidity, str(messages['hum']))
             result = client.publish(camera, images[i])
+            #result = client.publish(camera, 'CAMERA_ERROR')
             i += 1
             if i == 3:
                 i = 0

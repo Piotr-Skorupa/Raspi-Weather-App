@@ -49,6 +49,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import static com.example.piotrskorupa.raspiweatherapp.R.drawable.camera_error;
+
 public class MainActivity extends AppCompatActivity implements WeatherServiceCallback{
 
     /**
@@ -336,25 +338,28 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                     if (topic.toString().equals("SENSORS/PRESSURE")) {
                         pressureEdit.setText(mqttMessage.toString() + " hPa");
                         pressureMain = Double.parseDouble(mqttMessage.toString());
-                        //Toast.makeText(getActivity(), pressureMain, Toast.LENGTH_SHORT).show();
                     }
                     else if (topic.toString().equals("SENSORS/TEMPERATURE")){
                         temperatureEdit.setText(mqttMessage.toString() + " C");
                         temperatureMain = Double.parseDouble(mqttMessage.toString());
-                        //Toast.makeText(getActivity(), pressureMain, Toast.LENGTH_SHORT).show();
                     }
                     else if (topic.toString().equals("SENSORS/HUMIDITY"))
                     {
                         humidityEdit.setText(mqttMessage.toString() + " %");
                         humidityMain = Double.parseDouble(mqttMessage.toString());
-                        //Toast.makeText(getActivity(), pressureMain, Toast.LENGTH_SHORT).show();
                     }
                     else if (topic.toString().equals("SENSORS/CAMERA_PIC")) {
                         String imageString = mqttMessage.toString();
-                        byte[] decodeString = Base64.decode(imageString, Base64.DEFAULT);
-                        Bitmap decoded = BitmapFactory.decodeByteArray(decodeString, 0, decodeString.length);
-                        CameraActivity.cameraImage.setImageBitmap(decoded);
-                        Log.e("message", "I have got an message from camera. Should i have ?");
+                        if (imageString.equals("CAMERA_ERROR")){
+                            CameraActivity.cameraImage.setImageResource(R.drawable.camera_error);
+                        }
+                        else{
+                            byte[] decodeString = Base64.decode(imageString, Base64.DEFAULT);
+                            Bitmap decoded = BitmapFactory.decodeByteArray(decodeString, 0, decodeString.length);
+                            CameraActivity.cameraImage.setImageBitmap(decoded);
+                        }
+
+                        Log.d("message", "I have got an message from camera. Should i have ?");
                     }
                 }
 
