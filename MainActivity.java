@@ -166,21 +166,22 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
 
     @Override
     public void serviceSucces(Channel channel) {
-        Item item = channel.getItem();
 
-        double tempInFarenheit = new Double(item.getCondition().getTemperature());
+
+        double tempInFarenheit = new Double(channel.getCondition().getTemperature());
         double tempInCelsjus = (tempInFarenheit - 32.0) / 1.800;
         Double temp = BigDecimal.valueOf(tempInCelsjus)
                 .setScale(1, RoundingMode.HALF_UP)
                 .doubleValue();
-        String description = item.getCondition().getDescription();
+        String description = channel.getCondition().getDescription();
         PlaceholderFragment.temperatureEdit2.setText(temp + " C. " + description);
 
         int pressure, humidity, windSpeed;
-
-        pressure = channel.getAtmosphere().getPressure();
         humidity = channel.getAtmosphere().getHumidity();
         windSpeed = channel.getWind().getSpeed();
+
+        pressure = channel.getAtmosphere().getPressure();
+        pressure *= 33.8638; // pressure from inches to hpa
 
         PlaceholderFragment.pressureEdit2.setText(pressure + " hPa");
         PlaceholderFragment.humidityEdit2.setText(humidity + " %");
@@ -270,7 +271,7 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                 String city = sharedPref[0].getString("city", "Siechnice").toString();
                 String country = sharedPref[0].getString("country", "Poland").toString();
 
-                location =  city + ", " + country;
+                location =  city + "," + country;
 
                 final TextView locationText = (TextView) rootView.findViewById(R.id.location_text);
                 temperatureEdit2 = (EditText) rootView.findViewById(R.id.temperature_edit_text2);
@@ -302,7 +303,7 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                         String city = sharedPref[0].getString("city", "Siechnice").toString();
                         String country = sharedPref[0].getString("country", "Poland").toString();
 
-                        location =  city + ", " + country;
+                        location =  city + "," + country;
                         locationText.setText(location);
                         try{
                             yahooService[0] = new YahooWeatherService((WeatherServiceCallback) getActivity(), location);

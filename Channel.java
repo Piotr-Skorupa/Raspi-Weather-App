@@ -8,10 +8,9 @@ import org.json.JSONObject;
 
 public class Channel implements JSONPopulator {
 
-    private Units units;
-    private Item item;
     private Atmosphere atmosphere;
     private Wind wind;
+    private Condition condition;
 
     public Wind getWind() {
         return wind;
@@ -21,27 +20,17 @@ public class Channel implements JSONPopulator {
         return atmosphere;
     }
 
-    public Units getUnits() {
-        return units;
-    }
-
-    public Item getItem() {
-        return item;
-    }
-
+    public Condition getCondition() {return condition;}
     @Override
     public void populate(JSONObject data)
     {
-        units = new Units();
-        units.populate(data.optJSONObject("units"));
-
-        item = new Item();
-        item.populate(data.optJSONObject("item"));
-
         atmosphere = new Atmosphere();
         atmosphere.populate(data.optJSONObject("atmosphere"));
 
         wind = new Wind();
         wind.populate(data.optJSONObject("wind"));
+
+        condition = new Condition();
+        condition.populate(data.optJSONObject("condition"));
     }
 }
