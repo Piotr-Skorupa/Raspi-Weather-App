@@ -67,7 +67,8 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-    public static double temperatureMain = 0.0, pressureMain = 0.0, humidityMain = 0.0;
+    public static double temperatureMain = 0.0;
+    public static int humidityMain = 0, pressureMain = 0;
     private static final int MY_PERMISSIONS_REQUEST_SEND_SMS =0 ;
     public static String location;
     public static final String message = "Hi that is the weather in my place ";
@@ -183,9 +184,11 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
         pressure = channel.getAtmosphere().getPressure();
         pressure *= 33.8638; // pressure from inches to hpa
 
+        windSpeed *= 1.6; // mph to kmh
+
         PlaceholderFragment.pressureEdit2.setText(pressure + " hPa");
         PlaceholderFragment.humidityEdit2.setText(humidity + " %");
-        PlaceholderFragment.windEdit.setText(windSpeed + "km/h");
+        PlaceholderFragment.windEdit.setText(windSpeed + " km/h");
     }
 
     @Override
@@ -337,17 +340,22 @@ public class MainActivity extends AppCompatActivity implements WeatherServiceCal
                 public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
                     Log.w("Debug", mqttMessage.toString());
                     if (topic.toString().equals("SENSORS/PRESSURE")) {
-                        pressureEdit.setText(mqttMessage.toString() + " hPa");
-                        pressureMain = Double.parseDouble(mqttMessage.toString());
+                        Double parsingTemp = Double.parseDouble(mqttMessage.toString());
+                        pressureMain = parsingTemp.intValue();
+                        pressureEdit.setText(pressureMain + " hPa");
                     }
                     else if (topic.toString().equals("SENSORS/TEMPERATURE")){
-                        temperatureEdit.setText(mqttMessage.toString() + " C");
-                        temperatureMain = Double.parseDouble(mqttMessage.toString());
+                        Double temp = Double.parseDouble(mqttMessage.toString());
+                        temperatureMain = BigDecimal.valueOf(temp)
+                                .setScale(1, RoundingMode.HALF_UP)
+                                .doubleValue();
+                        temperatureEdit.setText( temperatureMain + " C");
                     }
                     else if (topic.toString().equals("SENSORS/HUMIDITY"))
                     {
-                        humidityEdit.setText(mqttMessage.toString() + " %");
-                        humidityMain = Double.parseDouble(mqttMessage.toString());
+                        Double parsingTemp = Double.parseDouble(mqttMessage.toString());
+                        humidityMain = parsingTemp.intValue();
+                        humidityEdit.setText(humidityMain + " %");
                     }
                     else if (topic.toString().equals("SENSORS/CAMERA_PIC")) {
                         String imageString = mqttMessage.toString();
