@@ -20,7 +20,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 public class MqttConnector {
     public MqttAndroidClient mqttAndroidClient;
-    final String serverUri = "tcp://213.222.211.83";
+    final String serverUri = "**************";
 
     final String clientId = "RaspiWeatherApp";
     final String subscriptionTopic = "SENSORS/PRESSURE";
